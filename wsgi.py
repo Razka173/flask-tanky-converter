@@ -1,3 +1,3 @@
-from cobaflask.main import app
+from tanky.main import app
 if __name__ == "__main__":
   app.run()
