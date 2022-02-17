@@ -120,15 +120,15 @@ def downloadRing():
 
 def generateRing():
     url = 'https://raw.githubusercontent.com/Razka173/flask-tanky-converter/master/example-ring.csv'
-    df = pd.read_csv(url)
+    df2 = pd.read_csv(url)
     f = StringIO()
     w = csv.writer(f)
-    columns = df.columns
-    w.writerow(columns)
+    columns2 = df2.columns
+    w.writerow(columns2)
     yield f.getvalue()
     f.seek(0)
     f.truncate(0)
-    for index, row in df.iterrows():
+    for index, row in df2.iterrows():
         m = int(row[0])
         cm = int(row[1])
         liter = float(row[2])
