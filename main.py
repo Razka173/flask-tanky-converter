@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for
 import os
 from os.path import join, dirname, realpath
 import csv
+from io import StringIO
+from werkzeug.wrappers import Response
 import pandas as pd
 
 app = Flask(__name__)
@@ -21,25 +23,19 @@ def uploadFiles():
       # get the uploaded file
       input_csv_upload = request.files.get('input')
       ring_csv_upload = request.files.get('ring')
-      parseCSV(input_csv_upload, ring_csv_upload)
-      return redirect(url_for('index'))
 
-def parseCSV(filePath, filePath2):
-      # Use Pandas to parse the CSV file
-      df = pd.read_csv(filePath)
-      ring = pd.read_csv(filePath2)
-
+      df = pd.read_csv(input_csv_upload)
+      ring = pd.read_csv(ring_csv_upload)
       ring['from'] = ring['from']*1000
       ring['to'] = ring['to']*1000
 
       baseInput = {}
-
       for index, row in df.iterrows():
-            m_to_mm = int(row['m']) * 1000
-            cm_to_mm = int(row['cm']) * 10
-            liter = float(row['liter'])
-            height = m_to_mm + cm_to_mm
-            baseInput[height] = liter
+          m_to_mm = int(row['m']) * 1000
+          cm_to_mm = int(row['cm']) * 10
+          liter = float(row['liter'])
+          height = m_to_mm + cm_to_mm
+          baseInput[height] = liter
 
       keys = baseInput.keys()
       minimum = min(keys)
@@ -47,29 +43,41 @@ def parseCSV(filePath, filePath2):
 
       ringInput = {}
       for x in range(minimum, maximum+1):
-            if x not in baseInput:
-                for key in baseInput:
-                        if key < x and x % key < 10 and x-key < 10:
-                              x_base_liter = baseInput[key]
-                              x_mm = x % key
-                              for index, row in ring.iterrows():
-                                    ring_start = int(row['from'])
-                                    ring_end = int(row['to'])
-                                    ring_mm = int(row['mm'])
-                                    ring_liter = float(row['liter'])
-                                    if x > ring_start and x < ring_end and x_mm == ring_mm:
-                                          total_liter = x_base_liter + ring_liter
-                                          ringInput[x] = total_liter
+          if x not in baseInput:
+              for key in baseInput:
+                  if key < x and x % key < 10 and x-key < 10:
+                      x_base_liter = baseInput[key]
+                      x_mm = x % key
+                      for index, row in ring.iterrows():
+                          ring_start = int(row['from'])
+                          ring_end = int(row['to'])
+                          ring_mm = int(row['mm'])
+                          ring_liter = float(row['liter'])
+                          if x > ring_start and x < ring_end and x_mm == ring_mm:
+                              total_liter = x_base_liter + ring_liter
+                              ringInput[x] = total_liter
 
       baseInput.update(ringInput)
 
-      f = open('output.csv', 'w', newline='', encoding='utf-8')
-      writer = csv.writer(f)
+      response = Response(generate(baseInput, minimum, maximum), mimetype='text/csv')
+      response.headers.set("Content-Disposition",
+                           "attachment", filename="output.csv")
+      return response
+
+      return redirect(url_for('index'))
+
+def generate(input_array, minimum, maximum):
+      # f = open('output.csv', 'w', newline='', encoding='utf-8')
+      f = StringIO()
+      w = csv.writer(f)
+
       for i in range(minimum, maximum+1):
-            if i in baseInput:
-                data = [i, format(baseInput[i], ".2f")]
-                writer.writerow(data)
-      f.close()
+          if i in input_array:
+                  data = [i, format(input_array[i], ".2f")]
+                  w.writerow(data)
+                  yield f.getvalue()
+                  f.seek(0)
+                  f.truncate(0)
 
 if (__name__ == "__main__"):
      app.run(port = 5000)
