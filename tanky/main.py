@@ -63,10 +63,8 @@ def uploadFiles():
 
     baseInput.update(ringInput)
 
-    response = Response(generate(baseInput, minimum,
-                          maximum), mimetype='text/csv')
-    response.headers.set("Content-Disposition",
-                           "attachment", filename="output.csv")
+    response = Response(generate(baseInput, minimum, maximum), mimetype='text/csv')
+    response.headers.set("Content-Disposition", "attachment", filename="output.csv")
     return response
 
 
@@ -74,7 +72,13 @@ def generate(input_array, minimum, maximum):
     # f = open('output.csv', 'w', newline='', encoding='utf-8')
     f = StringIO()
     w = csv.writer(f)
-
+    # header
+    header_data = ['height(mm)', 'volume(liter)']
+    w.writerow(header_data)
+    yield f.getvalue()
+    f.seek(0)
+    f.truncate(0)
+    # content
     for i in range(minimum, maximum+1):
         if i in input_array:
             data = [i, format(input_array[i], ".2f")]
