@@ -129,10 +129,12 @@ def generateRing():
     f.seek(0)
     f.truncate(0)
     for index, row in df2.iterrows():
-        m = int(row[0])
-        cm = int(row[1])
-        liter = float(row[2])
-        data = [m, cm, liter]
+        r_ring = int(row[0])
+        r_from = int(row[1])
+        r_to = int(row[2])
+        r_mm = int(row[3])
+        r_liter = float(row[4])
+        data = [r_ring, r_from, r_to, r_mm, r_liter]
         w.writerow(data)
         yield f.getvalue()
         f.seek(0)
