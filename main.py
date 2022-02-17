@@ -1,17 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for
 import os
 from os.path import join, dirname, realpath
-
+import csv
 import pandas as pd
 
 app = Flask(__name__)
 
 # enable debugging mode
 app.config["DEBUG"] = True
-
-# Upload folder
-UPLOAD_FOLDER = '/'
-app.config['UPLOAD_FOLDER'] =  UPLOAD_FOLDER
 
 # Root URL
 @app.route('/')
@@ -23,16 +19,9 @@ def index():
 @app.route("/", methods=['POST'])
 def uploadFiles():
       # get the uploaded file
-      input_csv_upload = request.files['input']
-      ring_csv_upload = request.files['ring']
-      if input_csv_upload.filename != '' and ring_csv_upload != '':
-           file_input_path = os.path.join(app.config['UPLOAD_FOLDER'], input_csv_upload.filename)
-           file_ring_path = os.path.join(app.config['UPLOAD_FOLDER'], ring_csv_upload.filename)
-          # set the file path
-           input_csv_upload.save(file_input_path)
-           ring_csv_upload.save(file_ring_path)
-           parseCSV(file_input_path, file_ring_path)
-          # save the file
+      input_csv_upload = request.files.get('input')
+      ring_csv_upload = request.files.get('ring')
+      parseCSV(input_csv_upload, ring_csv_upload)
       return redirect(url_for('index'))
 
 def parseCSV(filePath, filePath2):
@@ -74,10 +63,13 @@ def parseCSV(filePath, filePath2):
 
       baseInput.update(ringInput)
 
+      f = open('output.csv', 'w', newline='', encoding='utf-8')
+      writer = csv.writer(f)
       for i in range(minimum, maximum+1):
-          if i in baseInput:
-              print(i, baseInput[i])
-
+            if i in baseInput:
+                data = [i, format(baseInput[i], ".2f")]
+                writer.writerow(data)
+      f.close()
 
 if (__name__ == "__main__"):
      app.run(port = 5000)
