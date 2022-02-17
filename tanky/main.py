@@ -130,8 +130,8 @@ def generateRing():
     f.truncate(0)
     for index, row in df2.iterrows():
         r_ring = int(row[0])
-        r_from = int(row[1])
-        r_to = int(row[2])
+        r_from = float(row[1])
+        r_to = float(row[2])
         r_mm = int(row[3])
         r_liter = float(row[4])
         data = [r_ring, r_from, r_to, r_mm, r_liter]
